@@ -28,22 +28,21 @@ class EvalHelper:
                 metrics.append(f"{metric}@{threshold}")
         return metrics
 
-    def _retrieve (self, prediction, ids_map, cls):
+    def _retrieve(self, prediction, ids_map, cls):
         ranking = {}
         rows, cols = prediction.nonzero()
-        for row, col in tzip(rows,cols, desc="Ranking"):
+        for row, col in tzip(rows, cols, desc="Ranking"):
             text_idx = ids_map[row]
             label_idx = col
-            if (cls in self.labels_cls[label_idx] and cls in self.texts_cls[text_idx]) or cls=="all":
+            if (cls in self.labels_cls[label_idx] and cls in self.texts_cls[text_idx]) or cls == "all":
                 if f"text_{text_idx}" in ranking:
-                    ranking[f"text_{text_idx}"][f"label_{label_idx}"] = prediction[row,label_idx]
+                    ranking[f"text_{text_idx}"][f"label_{label_idx}"] = prediction[row, label_idx]
                 else:
                     ranking[f"text_{text_idx}"] = {}
-                    ranking[f"text_{text_idx}"][f"label_{label_idx}"] = prediction[row,label_idx]
+                    ranking[f"text_{text_idx}"][f"label_{label_idx}"] = prediction[row, label_idx]
         return ranking
 
     def perform_eval(self):
-
 
         results = []
         rankings = []
@@ -62,11 +61,11 @@ class EvalHelper:
                 qrels = Qrels(filtered_dictionary, name=cls)
                 run = Run(ranking, name=cls)
                 result = evaluate(qrels, run, self.metrics, threads=12)
-                result["fold"]=fold_id
-                result["cls"]=cls
+                result = {k: round(v, 3) for k, v in result.items()}
+                result["fold"] = fold_id
+                result["cls"] = cls
                 rankings.append(ranking)
                 results.append(result)
-
 
         self.helper.checkpoint_results(results)
         self.helper.checkpoint_rankings(rankings)
@@ -78,9 +77,9 @@ class EvalHelper:
         for text_idx, labels_ids in data.items():
             d = {}
             for label_idx in labels_ids:
-                d[f"label_{label_idx}"]=1.0
-            relevance_map[f"text_{text_idx}"]=d
-        return  relevance_map
+                d[f"label_{label_idx}"] = 1.0
+            relevance_map[f"text_{text_idx}"] = d
+        return relevance_map
 
     def _load_labels_cls(self):
         with open(f"{self.params.data.dir}label_cls.pkl", "rb") as label_cls_file:
@@ -90,14 +89,9 @@ class EvalHelper:
         with open(f"{self.params.data.dir}text_cls.pkl", "rb") as text_cls_file:
             return pickle.load(text_cls_file)
 
-
-
     def _load_ids_map(self, fold_id):
         test_samples_df = self.helper.get_samples(fold_id=fold_id, split="test")
         return pd.Series(
             test_samples_df["text_idx"].values,
             index=test_samples_df.index
         ).to_dict()
-
-
-

@@ -8,14 +8,13 @@ class PreprocessHelper:
         self.helper = Helper(params)
 
     def perform_preprocess(self):
-
         for fold_id in self.helper.params.data.folds:
             print(
                 f"Preprocess {self.helper.params.model.name} over {self.helper.params.data.name} (fold {fold_id}) with fowling self.params\n"
                 f"{OmegaConf.to_yaml(self.helper.params)}\n")
 
-            #vectorizer
-            train_samples_df = self.helper.get_samples(fold_id=fold_id,split="train")
+            # vectorizer
+            train_samples_df = self.helper.get_samples(fold_id=fold_id, split="train")
 
             vectorizer = self.helper.get_vectorizer(train_samples_df["text"])
             self.helper.checkpoint_vectorizer(vectorizer, fold_id)
@@ -26,5 +25,3 @@ class PreprocessHelper:
             # self._checkpoint_ids_map(
             #     ids_map, fold_id
             # )
-
-
